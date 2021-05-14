@@ -7,6 +7,8 @@ import (
 	"syscall"
 
 	"github.com/goj/maccbrowser/runner"
+	"github.com/goj/maccbrowser/storage"
+	"github.com/goj/maccbrowser/storage/disk"
 	"github.com/rs/zerolog"
 )
 
@@ -21,6 +23,18 @@ func main() {
 	dockerRunner, err := runner.NewRunner(ctx)
 	if err != nil {
 		mainLogger.Fatal().Err(err).Msg("failed to create docker client")
+	}
+
+	var profStor storage.ProfileStorage
+
+	profStor, err = disk.NewStorage()
+	if err != nil {
+		mainLogger.Fatal().Err(err).Msg("failed to create profile storage")
+	}
+
+	err = profStor.Load()
+	if err != nil {
+		mainLogger.Fatal().Err(err).Msg("failed to init profile storage")
 	}
 
 	signalChan := make(chan os.Signal, 1)
