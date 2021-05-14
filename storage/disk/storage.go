@@ -13,19 +13,11 @@ import (
 )
 
 const (
-	profileRoot     = "./profile_storage"
 	profileDescName = "profdesc.json"
 	profileUUIDlen  = 36
 )
 
-var (
-	ErrNotFound = errors.New("profile not found")
-)
-
-type StorageDesc struct {
-	Name  string
-	Proxy string
-}
+var ErrNotFound = errors.New("profile not found")
 
 type Storage struct {
 	root string
@@ -34,13 +26,12 @@ type Storage struct {
 	profiles   map[string]profile.Profile
 }
 
-func NewStorage() (*Storage, error) {
-	err := os.MkdirAll(profileRoot, 0644)
-	if err != nil {
+func NewStorage(root string) (*Storage, error) {
+	if err := os.MkdirAll(root, 0644); err != nil {
 		return nil, fmt.Errorf("creating profile root: %w", err)
 	}
 
-	return &Storage{root: profileRoot}, nil
+	return &Storage{root: root}, nil
 }
 
 func (s *Storage) Load() error {
@@ -64,7 +55,7 @@ func (s *Storage) Load() error {
 			return fmt.Errorf("read profile: %w", err)
 		}
 
-		var profDesc StorageDesc
+		var profDesc profile.Profile
 
 		err = json.NewDecoder(pf).Decode(&profDesc)
 		if err != nil {
@@ -75,11 +66,7 @@ func (s *Storage) Load() error {
 
 		pf.Close()
 
-		s.profiles[d.Name()] = profile.Profile{
-			GUID:  d.Name(),
-			Name:  profDesc.Name,
-			Proxy: profDesc.Proxy,
-		}
+		s.profiles[profDesc.GUID] = profDesc
 	}
 
 	return nil
@@ -128,6 +115,27 @@ func (s *Storage) Create(p profile.Profile) (profile.Profile, error) {
 
 		p.GUID = profUUID.String()
 	}
+
+	pdir := filepath.Join(s.root, p.GUID)
+
+	err := os.MkdirAll(pdir, 0644)
+	if err != nil {
+		return p, fmt.Errorf("create dir: %w", err)
+	}
+
+	pfile, err := os.Open(filepath.Join(pdir, profileDescName))
+	if err != nil {
+		return p, fmt.Errorf("create desc file: %w", err)
+	}
+
+	err = json.NewEncoder(pfile).Encode(p)
+	if err != nil {
+		pfile.Close()
+
+		return p, fmt.Errorf("encode profile desc: %w", err)
+	}
+
+	pfile.Close()
 
 	s.profilesMx.Lock()
 	s.profiles[p.GUID] = p

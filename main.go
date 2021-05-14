@@ -12,6 +12,8 @@ import (
 	"github.com/rs/zerolog"
 )
 
+const profileRoot = "./profile_storage"
+
 func main() {
 	logOutput := zerolog.ConsoleWriter{Out: os.Stdout}
 	mainLogger := zerolog.New(logOutput).With().Timestamp().Logger()
@@ -27,7 +29,7 @@ func main() {
 
 	var profStor storage.ProfileStorage
 
-	profStor, err = disk.NewStorage()
+	profStor, err = disk.NewStorage(profileRoot)
 	if err != nil {
 		mainLogger.Fatal().Err(err).Msg("failed to create profile storage")
 	}
