@@ -47,6 +47,7 @@ func (r *Runner) Close() error {
 	timeout := time.Second * 5
 
 	r.containersMx.Lock()
+	defer r.containersMx.Unlock()
 
 	for _, c := range r.containers {
 		err := r.cli.ContainerStop(context.Background(), c, &timeout)
@@ -59,8 +60,6 @@ func (r *Runner) Close() error {
 			return fmt.Errorf("remove container %s: %w", c, err)
 		}
 	}
-
-	r.containersMx.Unlock()
 
 	if err := r.cli.Close(); err != nil {
 		return fmt.Errorf("close client: %w", err)
