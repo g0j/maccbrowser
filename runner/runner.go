@@ -53,6 +53,11 @@ func (r *Runner) Close() error {
 		if err != nil {
 			return fmt.Errorf("stop container %s: %w", c, err)
 		}
+
+		err = r.cli.ContainerRemove(context.Background(), c, types.ContainerRemoveOptions{})
+		if err != nil {
+			return fmt.Errorf("remove container %s: %w", c, err)
+		}
 	}
 
 	r.containersMx.Unlock()
