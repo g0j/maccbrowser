@@ -39,6 +39,14 @@ func main() {
 		mainLogger.Fatal().Err(err).Msg("failed to init profile storage")
 	}
 
+	err = dockerRunner.RunBrowser(runner.RunOptions{
+		ChromeVersion: "90.0",
+		GUID:          "firstTryContainer",
+	})
+	if err != nil {
+		mainLogger.Fatal().Err(err).Msg("failed to run browser")
+	}
+
 	signalChan := make(chan os.Signal, 1)
 
 	mainLogger.Info().Msg("waiting for signal")
