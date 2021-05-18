@@ -54,7 +54,11 @@ func main() {
 
 	sig := <-signalChan
 
-	mainLogger.Fatal().Str("signal", sig.String()).Msg("signal received")
+	mainLogger.Warn().Str("signal", sig.String()).Msg("signal received, exiting...")
 	ctxCancel()
-	dockerRunner.Close()
+
+	err = dockerRunner.Close()
+	if err != nil {
+		mainLogger.Error().Err(err).Msg("failed to stop containers")
+	}
 }
